@@ -1,0 +1,403 @@
+/* Ürker — логика страницы: языки, макеты, конструктор заказа, отправка в таблицу и WhatsApp. */
+(function () {
+  'use strict';
+
+  var C = window.URKER_CONTENT;
+  var CFG = window.URKER_CONFIG || {};
+  var ART = window.UrkerArt;
+  var LANGS = ['kk', 'ru'];
+  var STORAGE_KEY = 'urker-lang';
+
+  var params = new URLSearchParams(location.search);
+  var isDraft = params.get('draft') === '1';
+  var isLocal = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+  var source = (params.get('utm_source') || '').replace(/[^\w.\-]/g, '').slice(0, 60);
+
+  var lang = 'kk';
+  var t = C.kk;
+
+  // Состояние конструктора
+  var state = { color: C.colors[0].id, engraving: '', font: C.engravingFonts[0].id, qty: 1 };
+  var MAX_QTY = CFG.maxQty || 9;
+  var MAX_LEN = CFG.maxEngraving || 20;
+  var ENGRAVING_OK = /^[\p{L}\p{N} .,\-&'’]*$/u;
+
+  document.documentElement.classList.add('js');
+
+  /* ---------- Вспомогательное ---------- */
+
+  function $(id) { return document.getElementById(id); }
+  function get(obj, path) { return path.split('.').reduce(function (o, k) { return o == null ? o : o[k]; }, obj); }
+  function storageGet() { try { return localStorage.getItem(STORAGE_KEY); } catch (e) { return null; } }
+  function storageSet(v) { try { localStorage.setItem(STORAGE_KEY, v); } catch (e) { /* Instagram может запрещать */ } }
+
+  function money(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' ₸'; }
+  function fill(s) { return String(s == null ? '' : s).replace(/\{price\}/g, money(CFG.price)).replace(/\{delivery\}/g, t.delivery); }
+
+  function setText(node, text) {
+    text = fill(text);
+    if (!isDraft || text.indexOf('[') === -1) { node.textContent = text; return; }
+    node.textContent = '';
+    text.split(/(\[[^\]]*\])/).forEach(function (part) {
+      if (!part) return;
+      if (part.charAt(0) === '[') { var m = document.createElement('mark'); m.className = 'draft'; m.textContent = part; node.appendChild(m); }
+      else node.appendChild(document.createTextNode(part));
+    });
+  }
+  function el(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; if (text != null) setText(n, text); return n; }
+  function waLink(text) { return 'https://wa.me/' + String(CFG.whatsapp || '').replace(/\D/g, '') + '?text=' + encodeURIComponent(text); }
+  function colorById(id) { return C.colors.filter(function (c) { return c.id === id; })[0] || C.colors[0]; }
+  function fontById(id) { return C.engravingFonts.filter(function (f) { return f.id === id; })[0] || C.engravingFonts[0]; }
+
+  /* ---------- Картинки: макеты или настоящие фото ---------- */
+
+  var ART_SIZE = { hero: [420, 540], openLed: [680, 560], charging: [520, 600], engraving: [600, 400], colors: [870, 420] };
+  function artFor(key) {
+    var black = C.colors[0].hex, serif = C.engravingFonts[0].css;
+    switch (key) {
+      case 'hero': return ART.hero({ color: black, text: 'Айгерім', font: serif });
+      case 'openLed': return ART.openLed({ color: black });
+      case 'charging': return ART.charging({ color: black });
+      case 'engraving': return ART.engraving({ color: black, text: 'Ә. Қасым', font: serif });
+      case 'colors': return ART.colors({ colors: C.colors });
+    }
+    return '';
+  }
+  function renderArt(box, key) {
+    if (CFG.useRealPhotos && CFG.photos && CFG.photos[key]) {
+      var img = document.createElement('img');
+      img.src = CFG.photos[key]; img.width = ART_SIZE[key][0]; img.height = ART_SIZE[key][1];
+      img.alt = box.getAttribute('aria-label') || ''; img.decoding = 'async';
+      if (key !== 'hero') img.loading = 'lazy';
+      box.removeAttribute('role'); box.textContent = ''; box.appendChild(img);
+    } else {
+      box.innerHTML = artFor(key);
+    }
+  }
+
+  /* ---------- Списки из content.js ---------- */
+
+  var openFaq = {};
+  var renderers = {
+    'hero.facts': function (box, items) { items.forEach(function (f) { box.appendChild(el('li', null, f)); }); },
+    'features.items': function (box, items) {
+      items.forEach(function (it) {
+        var card = el('article', 'feature');
+        var art = el('div', 'art'); art.setAttribute('role', 'img'); art.setAttribute('aria-label', it.imageAlt);
+        renderArt(art, it.id);
+        card.appendChild(art);
+        card.appendChild(el('h3', null, it.title));
+        card.appendChild(el('p', null, it.text));
+        box.appendChild(card);
+      });
+    },
+    'specs.items': function (box, items) {
+      items.forEach(function (it) { var row = el('div'); row.appendChild(el('dt', null, it.k)); row.appendChild(el('dd', null, it.v)); box.appendChild(row); });
+    },
+    'steps.items': function (box, items) { items.forEach(function (s) { var li = el('li'); li.appendChild(el('p', null, s)); box.appendChild(li); }); },
+    'faq.items': function (box, items) {
+      items.forEach(function (it, i) {
+        var d = document.createElement('details');
+        d.appendChild(el('summary', null, it.q));
+        var a = el('div', 'answer'); a.appendChild(el('p', null, it.a)); d.appendChild(a);
+        if (openFaq[i]) d.open = true;
+        d.addEventListener('toggle', function () { openFaq[i] = d.open; });
+        box.appendChild(d);
+      });
+    },
+    'privacy.sections': function (box, items) { items.forEach(function (s) { box.appendChild(el('h2', null, s.h)); box.appendChild(el('p', null, s.p)); }); },
+  };
+
+  /* ---------- Язык ---------- */
+
+  function applyLang(next) {
+    lang = LANGS.indexOf(next) === -1 ? 'kk' : next;
+    t = C[lang];
+    document.documentElement.lang = lang;
+    document.title = document.body.getAttribute('data-page') === 'privacy' ? t.privacy.title + ' — Ürker' : t.meta.title;
+    var md = document.querySelector('meta[name="description"]'); if (md) md.setAttribute('content', t.meta.description);
+
+    document.querySelectorAll('[data-t]').forEach(function (n) { setText(n, get(t, n.getAttribute('data-t'))); });
+    document.querySelectorAll('[data-t-attr]').forEach(function (n) {
+      n.getAttribute('data-t-attr').split(';').forEach(function (pair) { var b = pair.split(':'); n.setAttribute(b[0].trim(), fill(get(t, b[1].trim()) || '')); });
+    });
+    document.querySelectorAll('[data-list]').forEach(function (box) { var key = box.getAttribute('data-list'); box.textContent = ''; renderers[key](box, get(t, key) || []); });
+    document.querySelectorAll('.lang-switch button').forEach(function (b) {
+      var code = b.getAttribute('data-lang'); b.textContent = C.langButtons[code]; b.setAttribute('aria-pressed', code === lang ? 'true' : 'false');
+    });
+
+    document.querySelectorAll('.js-price').forEach(function (n) { n.textContent = money(CFG.price); });
+    document.querySelectorAll('.js-wa').forEach(function (a) { a.href = waLink(t.whatsappText); });
+    document.querySelectorAll('.js-wa-business').forEach(function (a) { a.href = waLink(t.business.whatsappText); });
+    var ig = 'https://instagram.com/' + (CFG.instagram || '');
+    document.querySelectorAll('.js-ig').forEach(function (a) { a.href = ig; });
+    document.querySelectorAll('.js-ig-text').forEach(function (a) { a.textContent = '@' + (CFG.instagram || ''); });
+
+    if (form) { renderBuilder(); refreshMessages(); }
+    observeReveal();
+  }
+
+  function setLang(next) {
+    applyLang(next);
+    storageSet(lang);
+    if (params.has('lang')) { params.set('lang', lang); try { history.replaceState(null, '', location.pathname + '?' + params.toString() + location.hash); } catch (e) { /* ничего */ } }
+  }
+  document.querySelectorAll('.lang-switch button').forEach(function (b) { b.addEventListener('click', function () { setLang(b.getAttribute('data-lang')); }); });
+
+  document.querySelectorAll('[data-art]').forEach(function (box) { renderArt(box, box.getAttribute('data-art')); });
+
+  /* ---------- Конструктор ---------- */
+
+  var form = $('order-form');
+  var engravingInput, nameInput, phoneInput, citySelect, consentInput, honeypot, submitBtn, summary, okBox, failBox;
+  var errors = {};
+  var sending = false;
+  var lastOrder = null;
+  var samplesOn = false;
+
+  function renderBuilder() {
+    // Цвета
+    var sw = $('swatches'); sw.textContent = '';
+    C.colors.forEach(function (c) {
+      var label = el('label', 'swatch'); label.title = c[lang];
+      var input = document.createElement('input'); input.type = 'radio'; input.name = 'color'; input.value = c.id;
+      input.setAttribute('aria-label', c[lang]); input.checked = c.id === state.color;
+      input.addEventListener('change', function () { state.color = c.id; updatePreview(); });
+      var dot = el('span'); dot.style.background = c.hex;
+      label.appendChild(input); label.appendChild(dot); sw.appendChild(label);
+    });
+    // Шрифты
+    var fc = $('font-choices'); fc.textContent = '';
+    C.engravingFonts.forEach(function (f) {
+      var label = el('label', 'choice');
+      var input = document.createElement('input'); input.type = 'radio'; input.name = 'font'; input.value = f.id; input.checked = f.id === state.font;
+      input.addEventListener('change', function () { state.font = f.id; updatePreview(); });
+      var sample = el('span', 'sample', f[lang]);
+      if (samplesOn) sample.style.fontFamily = f.css;
+      label.appendChild(input); label.appendChild(sample); fc.appendChild(label);
+    });
+    // Города: значение — русское название, одинаковое в таблице
+    var selected = citySelect.selectedIndex;
+    citySelect.textContent = '';
+    var ph = document.createElement('option'); ph.value = ''; ph.textContent = t.builder.cityPlaceholder; citySelect.appendChild(ph);
+    t.cities.forEach(function (label, i) { var o = document.createElement('option'); o.value = C.ru.cities[i]; o.textContent = label; citySelect.appendChild(o); });
+    if (selected > 0) citySelect.selectedIndex = selected;
+    updatePreview();
+  }
+
+  function updatePreview() {
+    var c = colorById(state.color), f = fontById(state.font);
+    $('preview').innerHTML = ART.hero({ color: c.hex, text: state.engraving, font: f.css });
+    $('color-name').textContent = c[lang];
+    $('preview-color').textContent = c[lang];
+    $('preview-font').textContent = f[lang];
+    var n = Array.from(state.engraving).length;
+    var counter = $('engraving-counter');
+    counter.textContent = t.builder.counter.replace('{n}', n).replace('{max}', MAX_LEN);
+    counter.classList.toggle('is-full', n >= MAX_LEN);
+    $('qty-value').textContent = state.qty;
+    $('qty-minus').disabled = state.qty <= 1;
+    $('qty-plus').disabled = state.qty >= MAX_QTY;
+    $('qty-more').hidden = state.qty < MAX_QTY;
+    $('total').textContent = money(CFG.price * state.qty);
+  }
+
+  // Маска номера +7 7XX XXX XX XX
+  function phoneDigits(value) {
+    var d = String(value).replace(/\D/g, '');
+    if (/^\s*\+\s*7/.test(value)) d = d.slice(1);
+    while (d.length > 10 && (d[0] === '7' || d[0] === '8')) d = d.slice(1);
+    return d.slice(0, 10);
+  }
+  function formatPhone(d) {
+    if (!d) return '';
+    var out = '+7 ' + d.slice(0, 3);
+    if (d.length > 3) out += ' ' + d.slice(3, 6);
+    if (d.length > 6) out += ' ' + d.slice(6, 8);
+    if (d.length > 8) out += ' ' + d.slice(8, 10);
+    return out;
+  }
+
+  function validate(fields) {
+    fields = fields || ['engraving', 'name', 'phone', 'city', 'consent'];
+    fields.forEach(function (f) { delete errors[f]; });
+    if (fields.indexOf('engraving') > -1 && !ENGRAVING_OK.test(state.engraving)) errors.engraving = 'engraving';
+    if (fields.indexOf('name') > -1 && !nameInput.value.trim()) errors.name = 'name';
+    if (fields.indexOf('phone') > -1) {
+      var d = phoneDigits(phoneInput.value);
+      if (!d) errors.phone = 'phoneEmpty'; else if (!/^7\d{9}$/.test(d)) errors.phone = 'phoneInvalid';
+    }
+    if (fields.indexOf('city') > -1 && !citySelect.value) errors.city = 'city';
+    if (fields.indexOf('consent') > -1 && !consentInput.checked) errors.consent = 'consent';
+    refreshMessages();
+    return Object.keys(errors).length === 0;
+  }
+
+  function refreshMessages() {
+    [['engraving', engravingInput], ['name', nameInput], ['phone', phoneInput], ['city', citySelect], ['consent', consentInput]].forEach(function (p) {
+      var key = errors[p[0]], box = $('err-' + p[0]);
+      if (key) { box.textContent = t.builder.errors[key]; box.hidden = false; p[1].setAttribute('aria-invalid', 'true'); }
+      else { box.hidden = true; box.textContent = ''; p[1].removeAttribute('aria-invalid'); }
+    });
+    if (!summary.hidden) summary.textContent = t.builder.errors.summary;
+    submitBtn.textContent = sending ? t.builder.sending : t.builder.submit;
+    if (lastOrder) {
+      var msg = orderMessage(lastOrder);
+      document.querySelectorAll('.js-order-wa').forEach(function (a) { a.href = waLink(msg); });
+      $('result-order').textContent = lastOrder.id ? t.builder.orderLabel + ' ' + lastOrder.id : '';
+    }
+  }
+
+  function orderMessage(o) {
+    var c = colorById(o.color), f = fontById(o.font);
+    var cityLabel = o.cityIndex > 0 ? t.cities[o.cityIndex - 1] : o.city;
+    return t.builder.waOrder
+      .replace('{order}', o.id ? t.builder.orderLabel + ' ' + o.id : t.builder.noId)
+      .replace('{color}', c[lang])
+      .replace('{engraving}', o.engraving ? '«' + o.engraving + '»' : t.builder.noEngraving)
+      .replace('{font}', f[lang])
+      .replace('{qty}', o.qty)
+      .replace('{sum}', money(o.sum))
+      .replace('{name}', o.name)
+      .replace('{city}', cityLabel);
+  }
+
+  function scriptUrl() {
+    var test = params.get('testScript');
+    if (isLocal && test && test.charAt(0) === '/') return test;
+    return CFG.appsScriptUrl;
+  }
+
+  function openWhatsApp() {
+    var msg = orderMessage(lastOrder);
+    // Небольшая пауза, чтобы человек увидел «Спасибо», затем открываем WhatsApp
+    setTimeout(function () { location.href = waLink(msg); }, 700);
+  }
+
+  if (form) {
+    engravingInput = $('f-engraving'); nameInput = $('f-name'); phoneInput = $('f-phone'); citySelect = $('f-city');
+    consentInput = $('f-consent'); honeypot = $('f-website'); submitBtn = $('f-submit');
+    summary = $('form-summary'); okBox = $('result-ok'); failBox = $('result-fail');
+
+    engravingInput.addEventListener('input', function () {
+      var chars = Array.from(engravingInput.value);
+      if (chars.length > MAX_LEN) { engravingInput.value = chars.slice(0, MAX_LEN).join(''); }
+      state.engraving = engravingInput.value;
+      validate(['engraving']);
+      updatePreview();
+    });
+    $('qty-minus').addEventListener('click', function () { if (state.qty > 1) { state.qty -= 1; updatePreview(); } });
+    $('qty-plus').addEventListener('click', function () { if (state.qty < MAX_QTY) { state.qty += 1; updatePreview(); } });
+
+    phoneInput.addEventListener('input', function () {
+      // Сохраняем позицию курсора: считаем, сколько цифр было до него
+      var pos = phoneInput.selectionStart || 0;
+      var digitsBefore = phoneInput.value.slice(0, pos).replace(/\D/g, '').length;
+      var formatted = formatPhone(phoneDigits(phoneInput.value));
+      phoneInput.value = formatted;
+      var p = 0, seen = 0;
+      while (p < formatted.length && seen < digitsBefore) { if (/\d/.test(formatted[p])) seen++; p++; }
+      try { phoneInput.setSelectionRange(p, p); } catch (e) { /* ничего */ }
+      if (errors.phone) validate(['phone']);
+    });
+    phoneInput.addEventListener('focus', function () { if (!phoneInput.value) phoneInput.value = '+7 '; });
+    phoneInput.addEventListener('blur', function () { if (phoneInput.value.trim() === '+7') phoneInput.value = ''; });
+    nameInput.addEventListener('input', function () { if (errors.name) validate(['name']); });
+    citySelect.addEventListener('change', function () { if (errors.city) validate(['city']); });
+    consentInput.addEventListener('change', function () { if (errors.consent) validate(['consent']); });
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (sending) return;
+      failBox.hidden = true;
+      if (!validate()) {
+        summary.hidden = false; summary.textContent = t.builder.errors.summary;
+        (errors.engraving ? engravingInput : errors.name ? nameInput : errors.phone ? phoneInput : errors.city ? citySelect : consentInput).focus();
+        return;
+      }
+      summary.hidden = true;
+
+      var c = colorById(state.color);
+      lastOrder = {
+        id: '', color: state.color, engraving: state.engraving.trim(), font: state.font, qty: state.qty,
+        sum: CFG.price * state.qty, name: nameInput.value.trim().slice(0, 80), city: citySelect.value, cityIndex: citySelect.selectedIndex,
+      };
+      if (honeypot.value) { showOk(); return; } // бот — ничего не отправляем
+
+      var payload = {
+        name: lastOrder.name, phone: '+7' + phoneDigits(phoneInput.value), city: lastOrder.city,
+        color: C.ru && c.ru, colorId: c.id, engraving: lastOrder.engraving, font: fontById(state.font).ru,
+        qty: lastOrder.qty, sum: lastOrder.sum, lang: lang, source: source, website: honeypot.value,
+      };
+
+      sending = true; submitBtn.disabled = true; refreshMessages();
+      var controller = 'AbortController' in window ? new AbortController() : null;
+      var timer = setTimeout(function () { if (controller) controller.abort(); }, 15000);
+      var url = scriptUrl();
+      var request = url
+        ? fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload), signal: controller ? controller.signal : undefined })
+            .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+        : Promise.reject(new Error('appsScriptUrl не указан в config.js'));
+
+      request.then(function (data) {
+        if (!data || data.ok !== true) throw new Error((data && data.error) || 'bad response');
+        lastOrder.id = data.id || '';
+        showOk();
+      }).catch(function (err) {
+        if (window.console) console.warn('Заказ не записан в таблицу:', err);
+        showFail();
+      }).then(function () { clearTimeout(timer); sending = false; submitBtn.disabled = false; refreshMessages(); });
+    });
+  }
+
+  function showOk() {
+    form.hidden = true; failBox.hidden = true; okBox.hidden = false;
+    refreshMessages(); okBox.focus(); openWhatsApp();
+  }
+  function showFail() {
+    failBox.hidden = false; refreshMessages(); failBox.focus(); openWhatsApp();
+  }
+
+  /* ---------- Шапка, плавающая кнопка, появление блоков ---------- */
+
+  var header = document.querySelector('.site-header');
+  function onScroll() { header.classList.toggle('is-scrolled', window.scrollY > 8); }
+  window.addEventListener('scroll', onScroll, { passive: true }); onScroll();
+
+  var revealObserver = null;
+  if ('IntersectionObserver' in window) {
+    var floatBtn = document.querySelector('.wa-float');
+    var hideFor = {};
+    var fo = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) { hideFor[en.target.id || 'footer'] = en.isIntersecting; });
+      if (floatBtn) floatBtn.classList.toggle('is-hidden', Object.keys(hideFor).some(function (k) { return hideFor[k]; }));
+    }, { threshold: 0.05 });
+    ['order', 'business'].map($).concat([document.querySelector('.site-footer')]).filter(Boolean).forEach(function (n) { fo.observe(n); });
+
+    // Образцы шрифтов гравировки подгружаем, только когда конструктор рядом
+    var orderSection = $('order');
+    if (orderSection) {
+      var so = new IntersectionObserver(function (entries) {
+        if (entries.some(function (en) { return en.isIntersecting; })) { samplesOn = true; so.disconnect(); if (form) renderBuilder(); }
+      }, { rootMargin: '400px 0px' });
+      so.observe(orderSection);
+    }
+
+    revealObserver = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) { if (en.isIntersecting) { en.target.classList.add('is-visible'); revealObserver.unobserve(en.target); } });
+    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.05 });
+  } else {
+    samplesOn = true;
+  }
+  function observeReveal() {
+    document.querySelectorAll('.reveal:not(.is-visible)').forEach(function (n) { if (revealObserver) revealObserver.observe(n); else n.classList.add('is-visible'); });
+  }
+
+  var year = $('year'); if (year) year.textContent = new Date().getFullYear();
+
+  /* ---------- Старт ---------- */
+  var fromUrl = params.get('lang'), saved = storageGet();
+  var initial = LANGS.indexOf(fromUrl) > -1 ? fromUrl : (LANGS.indexOf(saved) > -1 ? saved : 'kk');
+  if (LANGS.indexOf(fromUrl) > -1) storageSet(fromUrl);
+  applyLang(initial);
+})();

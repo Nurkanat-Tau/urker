@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="kk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ürker</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#121212">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .privacy { padding: 40px 0 96px; }
+    .privacy h1 { font-size: 42px; margin: 24px 0 28px; }
+    .privacy h2 { font-size: 22px; margin: 30px 0 8px; }
+    .privacy p { color: var(--text-soft); max-width: 36em; }
+    .back-link { display: inline-flex; min-height: 44px; align-items: center; color: var(--text-soft); }
+  </style>
+</head>
+<body data-page="privacy">
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <symbol id="stars" viewBox="0 0 64 40">
+      <g stroke="currentColor" stroke-width=".8" stroke-linecap="round" opacity=".55">
+        <line x1="16" y1="26" x2="29" y2="30"/><line x1="29" y1="30" x2="38" y2="22"/><line x1="38" y1="22" x2="52" y2="24"/>
+        <line x1="52" y1="24" x2="55" y2="15"/><line x1="38" y1="22" x2="24" y2="13"/><line x1="24" y1="13" x2="12" y2="7"/>
+      </g>
+      <g fill="currentColor">
+        <circle cx="38" cy="22" r="3.2"/><circle cx="52" cy="24" r="2.4"/><circle cx="55" cy="15" r="1.7"/><circle cx="29" cy="30" r="2.2"/>
+        <circle cx="16" cy="26" r="2.4"/><circle cx="24" cy="13" r="2.1"/><circle cx="12" cy="7" r="1.8"/>
+      </g>
+    </symbol>
+  </svg>
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <a class="logo" href="./" data-t-attr="aria-label:logoLabel">
+        <svg class="logo-mark" viewBox="0 0 64 40" aria-hidden="true" focusable="false"><use href="#stars"/></svg>
+        <span class="logo-word" aria-hidden="true">Ürker</span>
+      </a>
+      <div class="lang-switch" role="group" data-t-attr="aria-label:langSwitchLabel">
+        <button type="button" data-lang="kk" lang="kk"></button>
+        <button type="button" data-lang="ru" lang="ru"></button>
+      </div>
+    </div>
+  </header>
+  <main class="privacy">
+    <div class="wrap narrow">
+      <a class="back-link" href="./" data-t="privacy.back"></a>
+      <h1 data-t="privacy.title"></h1>
+      <div data-list="privacy.sections"></div>
+    </div>
+  </main>
+  <script src="config.js"></script>
+  <script src="content.js"></script>
+  <script src="art.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>

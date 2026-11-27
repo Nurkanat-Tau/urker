@@ -15,6 +15,7 @@
 @font-face { font-family: 'Bad Script'; font-display: swap; src: url(fonts/script-latin.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
 
 :root {
+  color-scheme: dark;
   --bg: #121212;
   --bg-2: #1A1918;
   --text: #EDE8DF;
@@ -103,7 +104,7 @@ h1 .slogan { display: block; font-size: 42px; }
 .sketch-note { font-size: 12px; color: var(--text-soft); text-align: center; margin-top: -6px; }
 
 /* ---------- Почему Үркер (светлый блок) ---------- */
-.story { background: var(--paper); color: var(--ink); padding: 64px 0; }
+.story { background: var(--paper); color: var(--ink); padding: 64px 0; color-scheme: light; }
 .story h2 { margin-bottom: 14px; }
 .story-grid { display: grid; gap: 24px; }
 .story-stars { width: 140px; height: 88px; color: var(--ink); }
@@ -198,7 +199,7 @@ input[aria-invalid="true"], select[aria-invalid="true"] { border-color: var(--er
 .step-list li p { font-size: 18px; }
 
 /* ---------- Для компаний (светлый блок) ---------- */
-.business { background: var(--paper); color: var(--ink); padding: 64px 0; }
+.business { background: var(--paper); color: var(--ink); padding: 64px 0; color-scheme: light; }
 .business h2 { margin-bottom: 12px; }
 .business-text { font-family: var(--serif); font-size: 21px; max-width: 30em; margin-bottom: 26px; }
 .business .btn { background: var(--ink); border-color: var(--ink); color: var(--paper); }
@@ -246,7 +247,8 @@ mark.draft { background: #FFE34D; color: #121212; padding: 0 2px; }
 
 /* ---------- Планшет ---------- */
 @media (min-width: 700px) {
-  :root { --gutter: 40px; --section: 110px; }
+  :root {
+  color-scheme: dark; --gutter: 40px; --section: 110px; }
   .hero-media .art { max-width: 340px; }
   h2 { font-size: 44px; margin-bottom: 36px; }
   h1 .slogan { font-size: 60px; }

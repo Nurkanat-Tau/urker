@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="kk">
+<html lang="kk" data-page-lang="kk">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -8,18 +8,21 @@
     их читают WhatsApp/Instagram при пересылке ссылки, а они не запускают JS.
     Видимые тексты — в content.js.
   -->
-  <title>Ürker Executive — Уақытың — сенің таңбаң</title>
-  <meta name="description" content="Сымсыз қуаттандыратын, LED-жарығы бар премиум күнделік. Атыңызды гравировкалаймыз. Қазақстан бойынша жеткізу.">
+  <title>Ürker Executive — гравировкасы бар премиум күнделік</title>
+  <meta name="description" content="Телефонды сымсыз қуаттайтын, логотипі жарықпен жанатын премиум күнделік. Мұқабасына атыңызды жазамыз. 5 түс, алдын ала тапсырыс, Kaspi арқылы төлем.">
   <meta name="theme-color" content="#121212">
 
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Ürker">
   <meta property="og:locale" content="kk_KZ">
   <meta property="og:locale:alternate" content="ru_RU">
-  <meta property="og:title" content="Ürker Executive — Уақытың — сенің таңбаң">
-  <meta property="og:description" content="Сымсыз қуаттандыратын, LED-жарығы бар премиум күнделік. Атыңызды гравировкалаймыз.">
+  <meta property="og:title" content="Ürker Executive — Уақытың — сенің таңбаң.">
+  <meta property="og:description" content="Телефонды сымсыз қуаттайтын, логотипі жарықпен жанатын премиум күнделік. Мұқабасына атыңызды жазамыз.">
   <!-- Адрес сайта: https://urkerstore.kz/ -->
   <link rel="canonical" href="https://urkerstore.kz/">
+  <link rel="alternate" hreflang="kk" href="https://urkerstore.kz/">
+  <link rel="alternate" hreflang="ru" href="https://urkerstore.kz/ru/">
+  <link rel="alternate" hreflang="x-default" href="https://urkerstore.kz/">
   <meta property="og:url" content="https://urkerstore.kz/">
   <meta property="og:image" content="https://urkerstore.kz/images/og.jpg">
   <meta property="og:image:width" content="1200">
@@ -31,7 +34,8 @@
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="preload" href="fonts/lora-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="fonts/golos-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="styles.css?v=20261127b">
+  <link rel="preload" href="fonts/golos-cyrillic-ext.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="styles.css?v=20261127c">
 </head>
 <body>
   <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
@@ -62,7 +66,7 @@
     <div class="wrap header-inner">
       <a class="logo" href="#top" data-t-attr="aria-label:logoLabel">
         <svg class="logo-mark" viewBox="0 0 64 40" aria-hidden="true" focusable="false"><use href="#stars"/></svg>
-        <span class="logo-word" aria-hidden="true">Ürker</span>
+        <span class="logo-word" aria-hidden="true" translate="no">Ürker</span>
       </a>
       <div class="header-right">
         <a class="ig-link js-ig" target="_blank" rel="noopener" data-t-attr="aria-label:instagramLabel">
@@ -82,7 +86,7 @@
       <div class="wrap hero-grid">
         <div class="hero-text">
           <p class="kind" data-t="hero.kind"></p>
-          <h1><span class="product" data-t="hero.product"></span><span class="slogan" data-t="hero.slogan"></span></h1>
+          <h1><span class="product" data-t="hero.product" translate="no"></span><span class="slogan" data-t="hero.slogan"></span></h1>
           <p class="lead" data-t="hero.lead"></p>
           <div class="price-row">
             <svg class="price-star" viewBox="0 0 64 40" aria-hidden="true"><use href="#stars"/></svg>
@@ -156,7 +160,7 @@
                 <label for="f-engraving" data-t="builder.engravingLabel"></label>
                 <span class="counter" id="engraving-counter" aria-live="polite"></span>
               </div>
-              <input id="f-engraving" name="engraving" type="text" autocomplete="off" data-t-attr="placeholder:builder.engravingPlaceholder" aria-describedby="hint-engraving err-engraving">
+              <input id="f-engraving" name="engraving" type="text" autocomplete="off" spellcheck="false" data-t-attr="placeholder:builder.engravingPlaceholder" aria-describedby="hint-engraving err-engraving">
               <p class="field-hint" id="hint-engraving" data-t="builder.engravingHint"></p>
               <p class="field-error" id="err-engraving" hidden></p>
             </div>
@@ -276,7 +280,7 @@
     <div class="wrap footer-inner">
       <div>
         <svg class="footer-mark" viewBox="0 0 64 40" aria-hidden="true"><use href="#stars"/></svg>
-        <p class="footer-word">Ürker</p>
+        <p class="footer-word" translate="no">Ürker</p>
         <p data-t="footer.brand"></p>
         <p data-t="footer.origin"></p>
       </div>
@@ -297,9 +301,9 @@
     <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#wa-icon"/></svg>
   </a>
 
-  <script src="config.js?v=20261127b"></script>
-  <script src="content.js?v=20261127b"></script>
-  <script src="art.js?v=20261127b"></script>
-  <script src="main.js?v=20261127b"></script>
+  <script src="config.js?v=20261127c"></script>
+  <script src="content.js?v=20261127c"></script>
+  <script src="art.js?v=20261127c"></script>
+  <script src="main.js?v=20261127c"></script>
 </body>
 </html>

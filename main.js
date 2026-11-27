@@ -13,6 +13,22 @@
   var isLocal = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
   var source = (params.get('utm_source') || '').replace(/[^\w.\-]/g, '').slice(0, 60);
 
+  // Две языковые страницы для Google: «/» — казахская, «/ru/» — русская.
+  // На страницах с data-page-lang язык задаёт сама страница; кнопки ҚАЗ/РУС переходят между ними.
+  var PAGE_LANG = document.documentElement.getAttribute('data-page-lang');
+  var ROOT = document.documentElement.getAttribute('data-root') || '';
+  function pageUrl(code) {
+    var q = new URLSearchParams(location.search); q.delete('lang');
+    var qs = q.toString();
+    return (code === 'ru' ? ROOT + 'ru/' : (ROOT || './')) + (qs ? '?' + qs : '') + location.hash;
+  }
+  if (PAGE_LANG) {
+    var asked = params.get('lang');
+    var remembered = (function () { try { return localStorage.getItem('urker-lang'); } catch (e) { return null; } })();
+    if (asked === 'kk' || asked === 'ru') { try { localStorage.setItem('urker-lang', asked); } catch (e) { /* ничего */ } }
+    var target = (asked === 'kk' || asked === 'ru') ? asked : (PAGE_LANG === 'kk' && remembered === 'ru' ? 'ru' : PAGE_LANG);
+    if (target !== PAGE_LANG) { location.replace(pageUrl(target)); return; }
+  }
   var lang = 'kk';
   var t = C.kk;
 
@@ -71,7 +87,7 @@
   function renderArt(box, key) {
     if (CFG.useRealPhotos && CFG.photos && CFG.photos[key]) {
       var img = document.createElement('img');
-      img.src = CFG.photos[key]; img.width = ART_SIZE[key][0]; img.height = ART_SIZE[key][1];
+      img.src = ROOT + CFG.photos[key]; // на русской странице (/ru/) путь на уровень выше img.width = ART_SIZE[key][0]; img.height = ART_SIZE[key][1];
       img.alt = box.getAttribute('aria-label') || ''; img.decoding = 'async';
       if (key !== 'hero') img.loading = 'lazy';
       box.removeAttribute('role'); box.textContent = ''; box.appendChild(img);
@@ -155,7 +171,14 @@
     storageSet(lang);
     if (params.has('lang')) { params.set('lang', lang); try { history.replaceState(null, '', location.pathname + '?' + params.toString() + location.hash); } catch (e) { /* ничего */ } }
   }
-  document.querySelectorAll('.lang-switch button').forEach(function (b) { b.addEventListener('click', function () { setLang(b.getAttribute('data-lang')); }); });
+  document.querySelectorAll('.lang-switch button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var code = b.getAttribute('data-lang');
+      if (!PAGE_LANG) { setLang(code); return; }
+      storageSet(code);
+      if (code !== PAGE_LANG) location.href = pageUrl(code);
+    });
+  });
 
   document.querySelectorAll('[data-art]').forEach(function (box) { renderArt(box, box.getAttribute('data-art')); });
 
@@ -458,8 +481,44 @@
   var year = $('year'); if (year) year.textContent = new Date().getFullYear();
 
   /* ---------- Старт ---------- */
-  var fromUrl = params.get('lang'), saved = storageGet();
-  var initial = LANGS.indexOf(fromUrl) > -1 ? fromUrl : (LANGS.indexOf(saved) > -1 ? saved : 'kk');
-  if (LANGS.indexOf(fromUrl) > -1) storageSet(fromUrl);
-  applyLang(initial);
+  if (PAGE_LANG) {
+    applyLang(PAGE_LANG);
+    addStructuredData();
+  } else {
+    var fromUrl = params.get('lang'), saved = storageGet();
+    var initial = LANGS.indexOf(fromUrl) > -1 ? fromUrl : (LANGS.indexOf(saved) > -1 ? saved : 'kk');
+    if (LANGS.indexOf(fromUrl) > -1) storageSet(fromUrl);
+    applyLang(initial);
+  }
+
+  /* ---------- Структурированные данные для Google (цена берётся из config.js) ---------- */
+  // Только правда: без рейтингов и отзывов. Картинку товара добавим, когда будут настоящие фото.
+  function addStructuredData() {
+    var site = 'https://urkerstore.kz/';
+    var url = PAGE_LANG === 'ru' ? site + 'ru/' : site;
+    var data = {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'Organization', '@id': site + '#org', name: 'Ürker', url: site,
+          logo: site + 'apple-touch-icon.png',
+          sameAs: CFG.instagram ? ['https://instagram.com/' + CFG.instagram] : [],
+          contactPoint: { '@type': 'ContactPoint', telephone: '+' + String(CFG.whatsapp || '').replace(/\D/g, ''), contactType: 'customer service', availableLanguage: ['kk', 'ru'] },
+        },
+        { '@type': 'WebSite', '@id': site + '#site', url: site, name: 'Ürker', inLanguage: ['kk', 'ru'], publisher: { '@id': site + '#org' } },
+        {
+          '@type': 'Product', name: 'Ürker Executive', description: t.meta.description,
+          brand: { '@type': 'Brand', name: 'Ürker' },
+          offers: {
+            '@type': 'Offer', url: url, price: String(CFG.price), priceCurrency: 'KZT',
+            availability: 'https://schema.org/PreOrder', seller: { '@id': site + '#org' },
+          },
+        },
+      ],
+    };
+    var s = document.createElement('script');
+    s.type = 'application/ld+json';
+    s.textContent = JSON.stringify(data);
+    document.head.appendChild(s);
+  }
 })();

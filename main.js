@@ -34,8 +34,13 @@
   function money(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' ₸'; }
   function fill(s) { return String(s == null ? '' : s).replace(/\{price\}/g, money(CFG.price)).replace(/\{delivery\}/g, t.delivery); }
 
+  // Незаполненные заглушки [ ... ]: в обычном режиме такие строки прячем целиком,
+  // в режиме ?draft=1 — показываем и подсвечиваем.
+  function hasGap(s) { return !isDraft && /\[[^\]]*\]/.test(fill(s)); }
+
   function setText(node, text) {
     text = fill(text);
+    if (node.toggleAttribute) node.toggleAttribute('data-gap', hasGap(text));
     if (!isDraft || text.indexOf('[') === -1) { node.textContent = text; return; }
     node.textContent = '';
     text.split(/(\[[^\]]*\])/).forEach(function (part) {
@@ -92,11 +97,12 @@
       });
     },
     'specs.items': function (box, items) {
-      items.forEach(function (it) { var row = el('div'); row.appendChild(el('dt', null, it.k)); row.appendChild(el('dd', null, it.v)); box.appendChild(row); });
+      items.forEach(function (it) { if (hasGap(it.v)) return; var row = el('div'); row.appendChild(el('dt', null, it.k)); row.appendChild(el('dd', null, it.v)); box.appendChild(row); });
     },
     'steps.items': function (box, items) { items.forEach(function (s) { var li = el('li'); li.appendChild(el('p', null, s)); box.appendChild(li); }); },
     'faq.items': function (box, items) {
       items.forEach(function (it, i) {
+        if (hasGap(it.a) || hasGap(it.q)) return;
         var d = document.createElement('details');
         d.appendChild(el('summary', null, it.q));
         var a = el('div', 'answer'); a.appendChild(el('p', null, it.a)); d.appendChild(a);
@@ -105,7 +111,7 @@
         box.appendChild(d);
       });
     },
-    'privacy.sections': function (box, items) { items.forEach(function (s) { box.appendChild(el('h2', null, s.h)); box.appendChild(el('p', null, s.p)); }); },
+    'privacy.sections': function (box, items) { items.forEach(function (s) { if (hasGap(s.p)) return; box.appendChild(el('h2', null, s.h)); box.appendChild(el('p', null, s.p)); }); },
   };
 
   /* ---------- Язык ---------- */
@@ -121,7 +127,14 @@
     document.querySelectorAll('[data-t-attr]').forEach(function (n) {
       n.getAttribute('data-t-attr').split(';').forEach(function (pair) { var b = pair.split(':'); n.setAttribute(b[0].trim(), fill(get(t, b[1].trim()) || '')); });
     });
-    document.querySelectorAll('[data-list]').forEach(function (box) { var key = box.getAttribute('data-list'); box.textContent = ''; renderers[key](box, get(t, key) || []); });
+    document.querySelectorAll('[data-list]').forEach(function (box) {
+      var key = box.getAttribute('data-list'); box.textContent = ''; renderers[key](box, get(t, key) || []);
+      // Если в списке не осталось ни одной заполненной строки — прячем список и его заголовок
+      var empty = box.children.length === 0;
+      box.toggleAttribute('data-gap', empty);
+      var h = box.parentNode && box.parentNode.querySelector('h2');
+      if (h && box.parentNode.contains(box)) h.toggleAttribute('data-gap', empty);
+    });
     document.querySelectorAll('.lang-switch button').forEach(function (b) {
       var code = b.getAttribute('data-lang'); b.textContent = C.langButtons[code]; b.setAttribute('aria-pressed', code === lang ? 'true' : 'false');
     });

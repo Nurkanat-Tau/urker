@@ -171,8 +171,8 @@
     var texts = Array.prototype.slice.call(svg.querySelectorAll('.u-engr'));
     var word = texts.length ? texts[0].textContent : '';
     var ORDER = [6, 5, 0, 3, 4, 1, 2]; // от Тайгеты к Плейоне — по линии созвездия
-    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (isLocal && params.get('motion') === '1') reduce = false; // только для проверки на своём компьютере
+    // Анимация только меняет свет и цвет (ничего не двигается), поэтому её можно показывать и при «уменьшить движение».
+    var reduce = false;
     var timers = [];
 
     function light(on) {

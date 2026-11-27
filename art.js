@@ -28,15 +28,15 @@
     var lw = opts.line == null ? 0.7 : opts.line;
     var s = '';
     if (lw > 0) {
-      s += '<g stroke="' + color + '" stroke-width="' + lw + '" stroke-linecap="round" opacity="' + (opts.lineOpacity || 0.55) + '">';
+      s += '<g class="u-lines" stroke="' + color + '" stroke-width="' + lw + '" stroke-linecap="round" opacity="' + (opts.lineOpacity || 0.55) + '">';
       LINES.forEach(function (l) {
         var a = STARS[l[0]], b = STARS[l[1]];
         s += '<line x1="' + a.x + '" y1="' + a.y + '" x2="' + b.x + '" y2="' + b.y + '"/>';
       });
       s += '</g>';
     }
-    s += '<g fill="' + color + '">';
-    STARS.forEach(function (p) { s += '<circle cx="' + p.x + '" cy="' + p.y + '" r="' + p.r + '"/>'; });
+    s += '<g class="u-dots" fill="' + color + '">';
+    STARS.forEach(function (p, i) { s += '<circle data-i="' + i + '" cx="' + p.x + '" cy="' + p.y + '" r="' + p.r + '"/>'; });
     return s + '</g>';
   }
 
@@ -90,16 +90,16 @@
     g += '<rect x="9" y="9" width="' + (w - 18) + '" height="' + (h - 18) + '" rx="5" fill="none" stroke="' + shade(c, 0.28) + '" stroke-width="1" stroke-dasharray="4 3" opacity=".8"/>';
     // LED-знак
     var lx = w / 2 - 33, ly = 58;
-    g += '<g transform="translate(' + lx + ' ' + ly + ') scale(1.1)"' + (o.led ? ' filter="url(#' + ids.glow + ')"' : '') + '>' +
+    g += '<g class="u-led" data-glow="url(#' + ids.glow + ')" transform="translate(' + lx + ' ' + ly + ') scale(1.1)"' + (o.led ? ' filter="url(#' + ids.glow + ')"' : '') + '>' +
       starMark(o.led ? '#F6E3B0' : BRASS, { line: 0.8, lineOpacity: o.led ? 0.8 : 0.5 }) + '</g>';
     // гравировка
     if (o.text) {
       var fs = o.font && /Script/.test(o.font) ? 30 : 24;
       var ty = h * 0.72;
       var common = ' x="' + (w / 2 + 4) + '" text-anchor="middle" font-family="' + esc(o.font || 'Lora, Georgia, serif') + '" font-size="' + fs + '" letter-spacing="' + (/Script/.test(o.font || '') ? 0 : 1.5) + '"';
-      g += '<text' + common + ' y="' + (ty + 1) + '" fill="' + BRASS_DARK + '" opacity=".9">' + esc(o.text) + '</text>';
-      g += '<text' + common + ' y="' + ty + '" fill="' + BRASS + '">' + esc(o.text) + '</text>';
-      g += '<text' + common + ' y="' + (ty - 0.6) + '" fill="' + BRASS_LIGHT + '" opacity=".35">' + esc(o.text) + '</text>';
+      g += '<text class="u-engr"' + common + ' y="' + (ty + 1) + '" fill="' + BRASS_DARK + '" opacity=".9">' + esc(o.text) + '</text>';
+      g += '<text class="u-engr"' + common + ' y="' + ty + '" fill="' + BRASS + '">' + esc(o.text) + '</text>';
+      g += '<text class="u-engr"' + common + ' y="' + (ty - 0.6) + '" fill="' + BRASS_LIGHT + '" opacity=".35">' + esc(o.text) + '</text>';
     }
     return g + '</g>';
   }

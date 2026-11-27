@@ -225,6 +225,13 @@ input[aria-invalid="true"], select[aria-invalid="true"] { border-color: var(--er
 .wa-float svg { width: 28px; height: 28px; }
 .wa-float.is-hidden { opacity: 0; transform: translateY(12px); pointer-events: none; }
 
+/* ---------- Первый экран: звёзды загораются, имя гравируется ---------- */
+.u-anim .u-dots circle { fill-opacity: .2; transition: fill .5s ease, fill-opacity .5s ease; }
+.u-anim .u-dots circle.on { fill: #F6E3B0; fill-opacity: 1; }
+.u-anim .u-lines { opacity: .12; transition: opacity .9s ease, stroke .9s ease; }
+.u-anim .u-led.lit .u-lines { opacity: .75; stroke: #F6E3B0; }
+.art.is-playable { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+
 /* ---------- Заглушки (?draft=1) ---------- */
 mark.draft { background: #FFE34D; color: #121212; padding: 0 2px; }
 

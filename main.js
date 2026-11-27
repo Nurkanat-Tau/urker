@@ -159,6 +159,55 @@
 
   document.querySelectorAll('[data-art]').forEach(function (box) { renderArt(box, box.getAttribute('data-art')); });
 
+  /* ---------- Первый экран: звёзды загораются, имя «гравируется» ---------- */
+  // Работает только на рисованном макете (не на фото). Нажатие на обложку — повтор.
+  (function animateHero() {
+    var box = document.querySelector('[data-art="hero"]');
+    if (!box || CFG.useRealPhotos) return;
+    var svg = box.querySelector('svg');
+    var led = svg && svg.querySelector('.u-led');
+    if (!led) return;
+    var dots = Array.prototype.slice.call(led.querySelectorAll('.u-dots circle'));
+    var texts = Array.prototype.slice.call(svg.querySelectorAll('.u-engr'));
+    var word = texts.length ? texts[0].textContent : '';
+    var ORDER = [6, 5, 0, 3, 4, 1, 2]; // от Тайгеты к Плейоне — по линии созвездия
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (isLocal && params.get('motion') === '1') reduce = false; // только для проверки на своём компьютере
+    var timers = [];
+
+    function light(on) {
+      led.classList.toggle('lit', on);
+      if (on) led.setAttribute('filter', led.getAttribute('data-glow')); else led.removeAttribute('filter');
+    }
+    function writeText(s) { texts.forEach(function (t) { t.textContent = s; }); }
+
+    svg.classList.add('u-anim');
+    if (reduce) { dots.forEach(function (d) { d.classList.add('on'); }); light(true); return; }
+
+    function play() {
+      timers.forEach(clearTimeout); timers = [];
+      dots.forEach(function (d) { d.classList.remove('on'); });
+      light(false);
+      writeText('');
+      var start = 350, step = 170;
+      ORDER.forEach(function (i, k) {
+        timers.push(setTimeout(function () {
+          var d = led.querySelector('circle[data-i="' + i + '"]'); if (d) d.classList.add('on');
+        }, start + k * step));
+      });
+      var lit = start + ORDER.length * step;
+      timers.push(setTimeout(function () { light(true); }, lit));
+      var chars = Array.from(word);
+      chars.forEach(function (_, k) {
+        timers.push(setTimeout(function () { writeText(chars.slice(0, k + 1).join('')); }, lit + 350 + k * 120));
+      });
+    }
+
+    box.classList.add('is-playable');
+    box.addEventListener('click', play);
+    play();
+  })();
+
   /* ---------- Конструктор ---------- */
 
   var form = $('order-form');

@@ -65,6 +65,8 @@
         '<feComposite in2="SourceGraphic" operator="in"/></filter>' +
       '<filter id="' + ids.glow + '" x="-150%" y="-150%" width="400%" height="400%">' +
         '<feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>' +
+      '<linearGradient id="' + ids.sheen + '" x1="0" y1="0" x2="1" y2="0">' +
+        '<stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#FFF4DC" stop-opacity=".16"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>' +
       '<linearGradient id="' + ids.light + '" x1="0" y1="0" x2="1" y2="1">' +
         '<stop offset="0" stop-color="#fff" stop-opacity=".10"/><stop offset=".55" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".22"/></linearGradient>' +
     '</defs>';
@@ -84,6 +86,9 @@
     g += '<rect width="' + w + '" height="' + h + '" rx="8" fill="' + c + '"/>';
     g += '<rect width="' + w + '" height="' + h + '" rx="8" fill="' + c + '" filter="url(#' + ids.grain + ')"/>';
     g += '<rect width="' + w + '" height="' + h + '" rx="8" fill="url(#' + ids.light + ')"/>';
+    // блик: полоса света за краем обложки, на сайте проезжает по ней (motion.js / styles.css)
+    g += '<clipPath id="' + ids.clip + '"><rect width="' + w + '" height="' + h + '" rx="8"/></clipPath>';
+    g += '<g clip-path="url(#' + ids.clip + ')"><g class="u-sheen"><rect x="-200" y="-60" width="130" height="' + (h + 120) + '" fill="url(#' + ids.sheen + ')" transform="skewX(-16)"/></g></g>';
     // корешок и строчка
     g += '<rect width="22" height="' + h + '" rx="8" fill="#000" opacity=".22"/>';
     g += '<path d="M24 0 V' + h + '" stroke="#000" stroke-opacity=".35" stroke-width="1.2"/>';
@@ -109,7 +114,7 @@
       (title ? '<title>' + esc(title) + '</title>' : '') + defs(ids) + body + '</svg>';
   }
 
-  function ids() { return { shadow: id('s'), grain: id('g'), glow: id('l'), light: id('d') }; }
+  function ids() { return { shadow: id('s'), grain: id('g'), glow: id('l'), light: id('d'), sheen: id('h'), clip: id('c') }; }
 
   // 1. Закрытый ежедневник спереди, с гравировкой
   function hero(o) {
@@ -129,7 +134,7 @@
     // модуль внутри обложки
     b += '<rect x="40" y="250" width="220" height="120" rx="10" fill="' + shade(c, -0.35) + '" stroke="' + shade(c, 0.2) + '" stroke-width="1"/>';
     b += '<rect x="132" y="356" width="36" height="8" rx="4" fill="#0B0B0B" stroke="' + BRASS + '" stroke-width=".8"/>';
-    b += '<g transform="translate(108 90) scale(1.3)" filter="url(#' + i.glow + ')">' + starMark('#F6E3B0', { line: 0.8, lineOpacity: 0.8 }) + '</g>';
+    b += '<g transform="translate(108 90) scale(1.3)" filter="url(#' + i.glow + ')"><g class="u-led2">' + starMark('#F6E3B0', { line: 0.8, lineOpacity: 0.8 }) + '</g></g>';
     b += '</g>';
     return wrap(680, 560, b, i, o.title);
   }
@@ -138,12 +143,15 @@
   function charging(o) {
     var i = ids();
     var b = '<g filter="url(#' + i.shadow + ')">' + coverGroup({ color: o.color, led: false }, i, 110, 70) + '</g>';
-    b += '<g transform="translate(190 150) rotate(-6)" filter="url(#' + i.shadow + ')">' +
+    b += '<g class="u-phone"><g transform="translate(190 150) rotate(-6)" filter="url(#' + i.shadow + ')">' +
       '<rect width="150" height="300" rx="24" fill="#0A0A0A" stroke="#2A2A2A" stroke-width="2"/>' +
       '<rect x="8" y="8" width="134" height="284" rx="18" fill="#161616"/>' +
       '<rect x="55" y="16" width="40" height="8" rx="4" fill="#0A0A0A"/>' +
-      '<g transform="translate(75 150)"><circle r="30" fill="none" stroke="' + BRASS + '" stroke-width="1.5" opacity=".7"/>' +
-      '<path d="M4 -16 L-8 3 H0 L-4 16 L8 -3 H0 Z" fill="' + BRASS + '"/></g></g>';
+      '<g transform="translate(75 150)">' +
+      '<circle class="u-ring" r="30" fill="none" stroke="' + BRASS + '" stroke-width="1" opacity="0"/>' +
+      '<circle class="u-ring" r="30" fill="none" stroke="' + BRASS + '" stroke-width="1" opacity="0"/>' +
+      '<circle r="30" fill="none" stroke="' + BRASS + '" stroke-width="1.5" opacity=".7"/>' +
+      '<path class="u-bolt" d="M4 -16 L-8 3 H0 L-4 16 L8 -3 H0 Z" fill="' + BRASS + '"/></g></g></g>';
     return wrap(520, 600, b, i, o.title);
   }
 
@@ -156,9 +164,11 @@
     b += '<rect width="600" height="400" fill="url(#' + i.light + ')"/>';
     b += '<rect x="24" y="24" width="552" height="352" rx="6" fill="none" stroke="' + shade(c, 0.28) + '" stroke-dasharray="6 4" opacity=".7"/>';
     var common = ' x="300" text-anchor="middle" font-family="' + f + '" font-size="72" letter-spacing="3"';
+    b += '<g class="u-engr-big">';
     b += '<text' + common + ' y="232" fill="' + BRASS_DARK + '">' + t + '</text>';
     b += '<text' + common + ' y="229" fill="' + BRASS + '">' + t + '</text>';
     b += '<text' + common + ' y="228" fill="' + BRASS_LIGHT + '" opacity=".35">' + t + '</text>';
+    b += '</g>';
     b += '<g transform="translate(268 290) scale(1)">' + starMark(BRASS, { line: 0.6 }) + '</g>';
     return wrap(600, 400, b, i, o.title);
   }
@@ -166,8 +176,11 @@
   // 5. Все цвета в ряд
   function colors(o) {
     var i = ids(), list = o.colors || [], b = '';
+    var mid = 40 + (list.length - 1) * 75;
     list.forEach(function (c, k) {
-      b += '<g filter="url(#' + i.shadow + ')" transform="translate(' + (40 + k * 150) + ' ' + (60 + (k % 2) * 18) + ') scale(.62)">' + coverGroup({ color: c.hex }, i, 0, 0) + '</g>';
+      var x = 40 + k * 150;
+      b += '<g class="u-cw" data-color="' + esc(c.id || '') + '" style="--k:' + k + ';--dx:' + (mid - x) + 'px">' +
+        '<g filter="url(#' + i.shadow + ')" transform="translate(' + x + ' ' + (60 + (k % 2) * 18) + ') scale(.62)">' + coverGroup({ color: c.hex }, i, 0, 0) + '</g></g>';
     });
     return wrap(40 + list.length * 150 + 80, 420, b, i, o.title);
   }

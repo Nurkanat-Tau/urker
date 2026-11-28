@@ -252,11 +252,8 @@ input[aria-invalid="true"], select[aria-invalid="true"] { border-color: var(--er
 /* ---------- Заглушки (?draft=1) ---------- */
 mark.draft { background: #FFE34D; color: #121212; padding: 0 2px; }
 
-/* ---------- Мягкое появление ---------- */
-
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  * { transition: none !important; }
 }
 
 /* ---------- Планшет ---------- */
@@ -304,3 +301,159 @@ mark.draft { background: #FFE34D; color: #121212; padding: 0 2px; }
 /* Пока характеристик нет — блок показывает только цвета, по центру */
 .specs-grid > div:has(> .spec[data-gap]) { display: none; }
 .specs-grid:has(> div > .spec[data-gap]) { grid-template-columns: 1fr; max-width: 760px; }
+
+/* =====================================================================
+   Движение (motion.js). Класс .m ставит motion.js — без JS всё видно сразу.
+   .m-calm — в системе включено «уменьшить движение»: без наклона, парения, падающих звёзд.
+   ===================================================================== */
+:root { --ease: cubic-bezier(.2, .7, .2, 1); --ease-out: cubic-bezier(.16, 1, .3, 1); }
+
+/* Шапка: въезд, линия прогресса */
+.m .site-header { animation: dropIn .9s var(--ease-out) both; }
+@keyframes dropIn { from { transform: translateY(-100%); opacity: 0; } }
+.progress { position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: linear-gradient(90deg, var(--brass-light), var(--brass) 60%, rgba(184,151,90,.4)); transform: scaleX(0); transform-origin: left; pointer-events: none; }
+
+/* Созвездия: звёзды вспыхивают по одной, линии прорисовываются, потом мерцают */
+.cn { overflow: visible; }
+.cn circle { transform-box: fill-box; transform-origin: center; }
+.m .cn:not(.on) circle { opacity: 0; }
+.m .cn:not(.on) line { stroke-dasharray: 1; stroke-dashoffset: 1; }
+.cn.on circle { animation: starPop .7s var(--ease-out) calc(var(--s, 0) * 110ms) both, twinkle 5s ease-in-out calc(1.6s + var(--s, 0) * .7s) infinite; }
+.cn.on line { stroke-dasharray: 1; animation: draw 1s var(--ease) calc(350ms + var(--l, 0) * 120ms) both; }
+@keyframes starPop { 0% { opacity: 0; transform: scale(.1); } 55% { opacity: 1; transform: scale(1.5); } 100% { opacity: 1; transform: scale(1); } }
+@keyframes twinkle { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
+@keyframes draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+
+/* Первый экран: ночное небо, тёплое сияние, парящая обложка */
+.hero { position: relative; overflow: hidden; }
+.sky { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+.hero-grid { position: relative; z-index: 1; }
+.hero::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 90px; background: linear-gradient(transparent, var(--bg)); pointer-events: none; z-index: 0; }
+.m .hero-media { position: relative; isolation: isolate; translate: 0 var(--py, 0px); opacity: var(--po, 1); }
+.m .hero-media::before { content: ''; position: absolute; left: 50%; top: 46%; width: 300px; aspect-ratio: 1; translate: -50% -50%; background: radial-gradient(closest-side, rgba(212,182,122,.22), rgba(184,151,90,.07) 55%, transparent 76%); z-index: -1; pointer-events: none; animation: halo 6s ease-in-out infinite; }
+@keyframes halo { 0%, 100% { opacity: .65; scale: .94; } 50% { opacity: 1; scale: 1.06; } }
+.m .hero-media .art { perspective: 900px; animation: float 7s ease-in-out 1.6s infinite; will-change: transform; }
+.m .hero-media .art svg { transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); transition: transform .6s var(--ease-out); }
+@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
+.m .hero-media .u-sheen { animation: sheen 7s ease-in-out 2.6s infinite; }
+@keyframes sheen { 0% { transform: translateX(0); } 24%, 100% { transform: translateX(660px); } }
+@keyframes sheenOnce { from { transform: translateX(0); } to { transform: translateX(660px); } }
+.u-spark { opacity: 0; transition: opacity .25s; pointer-events: none; }
+.u-spark.is-on { opacity: 1; }
+
+/* Первый экран: появление по очереди */
+.m .hero .product, .m .hero .lead, .m .hero .price-row, .m .hero-text .btn, .m .hero .facts li, .m .hero-media, .m .sketch-note { opacity: 0; }
+.hero.hero-in .hero-media { animation: emerge 1.5s var(--ease-out) both; }
+.hero.hero-in .product { animation: track 1.3s var(--ease-out) .05s both; }
+.hero.hero-in .lead { animation: rise .9s var(--ease-out) .55s both; }
+.hero.hero-in .price-row { animation: rise .9s var(--ease-out) .7s both; }
+.hero.hero-in .hero-text .btn { animation: rise .9s var(--ease-out) .85s both; }
+.hero.hero-in .facts li { animation: rise .8s var(--ease-out) calc(1s + var(--i, 0) * 110ms) both; }
+.hero.hero-in .sketch-note { animation: fade 1s ease 1.4s both; }
+@keyframes emerge { from { opacity: 0; transform: scale(.92) translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes track { from { opacity: 0; letter-spacing: .38em; } to { opacity: 1; letter-spacing: .04em; } }
+@keyframes rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+@keyframes fade { from { opacity: 0; } to { opacity: .8; } }
+
+/* Заголовки: слова поднимаются из-под строки */
+.split .w { display: inline-block; overflow: hidden; vertical-align: top; padding: .08em .03em .16em; margin: -.08em -.03em -.16em; }
+.split .w > span { display: inline-block; transition: transform 1.05s var(--ease-out), opacity .7s ease; transition-delay: calc(var(--w, 0) * 70ms); }
+.m .split:not(.in) .w > span { transform: translateY(105%); opacity: 0; }
+
+/* «Почему Үркер»: слова проявляются при прокрутке */
+.ink .iw { transition: opacity .5s ease; }
+.m .ink .iw:not(.lit) { opacity: .14; }
+
+/* Блоки поднимаются при прокрутке, соседние — с задержкой */
+.m [data-r] { transition: opacity .9s var(--ease), transform 1.05s var(--ease-out); transition-delay: calc(var(--i, 0) * 110ms); }
+.m [data-r]:not(.in) { opacity: 0; transform: translateY(28px); }
+
+/* Разделитель: линии расходятся от звёзд */
+.divider::before { transform-origin: right; }
+.divider::after { transform-origin: left; }
+.divider::before, .divider::after { transition: transform 1.4s var(--ease-out) .2s; }
+.m .divider:not(.in)::before, .m .divider:not(.in)::after { transform: scaleX(0); }
+
+/* Шаги: латунная нить соединяет цифры */
+.step-list { position: relative; }
+.step-list::before { content: ''; position: absolute; left: 10px; top: 14px; bottom: 30px; width: 1px; background: linear-gradient(var(--brass), rgba(184,151,90,.1)); transform-origin: top; transition: transform 1.8s var(--ease-out) .3s; }
+.m .step-list:not(.in)::before { transform: scaleY(0); }
+.step-list li::before { position: relative; z-index: 1; background: var(--bg); padding-bottom: 8px; justify-self: start; }
+
+/* Три отличия: живые сцены */
+.feature .art { background: radial-gradient(ellipse at 50% 42%, #201E1A, #0C0C0C 72%); transition: transform .7s var(--ease-out); }
+.m .feature .art:not(.play) .u-phone { transform: translateY(-70px); opacity: 0; }
+.feature .art.play .u-phone { animation: drop 1.2s var(--ease-out) .15s both; }
+@keyframes drop { 0% { transform: translateY(-80px); opacity: 0; } 65% { transform: translateY(5px); opacity: 1; } 100% { transform: none; opacity: 1; } }
+.u-ring { transform-box: fill-box; transform-origin: center; }
+.feature .art.play .u-ring { animation: ring 2.6s ease-out 1.3s infinite; }
+.feature .art.play .u-ring + .u-ring { animation-delay: 2.6s; }
+@keyframes ring { from { opacity: .85; transform: scale(1); } to { opacity: 0; transform: scale(2.6); } }
+.feature .art.play .u-bolt { animation: bolt 2.6s ease-in-out 1.3s infinite; }
+@keyframes bolt { 0%, 100% { fill: #B8975A; } 45% { fill: #F6E3B0; } }
+.u-led2 circle { transform-box: fill-box; transform-origin: center; }
+.m .feature .art:not(.play) .u-led2 circle { opacity: .12; }
+.m .feature .art:not(.play) .u-led2 line { stroke-dasharray: 1; stroke-dashoffset: 1; }
+.feature .art.play .u-led2 circle { animation: starPop .7s var(--ease-out) calc(.35s + var(--s, 0) * 150ms) both, twinkle 4.5s ease-in-out calc(2.4s + var(--s, 0) * .6s) infinite; }
+.feature .art.play .u-led2 line { stroke-dasharray: 1; animation: draw 1.1s var(--ease) calc(1.2s + var(--l, 0) * 130ms) both; }
+.feature .art:has(.u-engr-big) { cursor: pointer; }
+@media (hover: hover) { .feature:hover .art { transform: translateY(-6px); } }
+
+/* Пять цветов: веер из стопки, наведение поднимает */
+.u-cw { transition: transform 1.1s var(--ease-out), opacity .7s ease; transition-delay: calc(var(--k, 0) * 80ms); cursor: pointer; }
+.m .colors-figure:not(.in) .u-cw { transform: translateX(var(--dx, 0)); opacity: 0; }
+.colors-figure.in .u-cw:hover { transform: translateY(-26px); transition-delay: 0s; transition-duration: .45s; }
+.color-item, .color-list-label { transition: opacity .6s ease, transform .6s var(--ease-out); transition-delay: calc(.7s + var(--k, 0) * 80ms); }
+.m .colors-figure:not(.in) .color-item, .m .colors-figure:not(.in) .color-list-label { opacity: 0; transform: translateY(8px); }
+
+/* Конструктор */
+.preview { perspective: 700px; }
+.preview.swap svg { animation: swap .6s var(--ease-out); }
+.preview.swap .u-sheen { animation: sheenOnce 1s ease-out .1s both; }
+@keyframes swap { 0% { opacity: .35; transform: rotateY(-22deg) scale(.95); } 100% { opacity: 1; transform: none; } }
+.swatch { transition: transform .25s var(--ease-out), border-color .2s; }
+.swatch span { transition: transform .35s var(--ease-out); }
+.swatch:has(input:checked) span { transform: scale(.84); }
+@media (hover: hover) { .swatch:hover { transform: translateY(-2px); } }
+.choice { transition: border-color .2s, background-color .2s; }
+.choice:has(input:checked) { border-color: var(--brass); background: rgba(184,151,90,.08); }
+.qty output, #total { display: inline-block; }
+.tick { animation: tick .35s var(--ease-out); }
+@keyframes tick { from { transform: translateY(-35%); opacity: .2; } to { transform: none; opacity: 1; } }
+
+/* Кнопки: блик и нажатие */
+.btn { position: relative; overflow: hidden; isolation: isolate; transition: background-color .2s, color .2s, border-color .2s, transform .15s; }
+.btn:active { transform: scale(.985); }
+.btn::after { content: ''; position: absolute; top: 0; bottom: 0; left: -50%; width: 38%; background: linear-gradient(100deg, transparent, rgba(212,182,122,.45), transparent); transform: skewX(-20deg); opacity: 0; pointer-events: none; }
+@media (hover: hover) { .btn:hover::after { animation: shine .9s var(--ease) both; } }
+.btn.shine::after { animation: shine 1.2s var(--ease) both; }
+.buybar:not(.is-hidden) .buybar-order::after { animation: shine 1.2s var(--ease) .4s both; }
+@keyframes shine { from { opacity: 1; transform: skewX(-20deg) translateX(0); } to { opacity: 1; transform: skewX(-20deg) translateX(420%); } }
+
+/* Спасибо за заказ */
+.result:not([hidden]) .result-text, .result:not([hidden]) .result-order, .result:not([hidden]) .btn { animation: rise .8s var(--ease-out) .6s both; }
+.result-stars { width: 96px; height: 60px; }
+
+/* Для компаний: большое созвездие-водяной знак */
+.business { position: relative; overflow: hidden; }
+.business::after { content: ''; position: absolute; right: -40px; bottom: -30px; width: 340px; height: 212px; opacity: .07; pointer-events: none; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 40'%3E%3Cg stroke='%231C1A17' stroke-width='.5' fill='none'%3E%3Cpath d='M16 26 29 30 38 22 52 24 55 15M38 22 24 13 12 7'/%3E%3C/g%3E%3Cg fill='%231C1A17'%3E%3Ccircle cx='38' cy='22' r='3.2'/%3E%3Ccircle cx='52' cy='24' r='2.4'/%3E%3Ccircle cx='55' cy='15' r='1.7'/%3E%3Ccircle cx='29' cy='30' r='2.2'/%3E%3Ccircle cx='16' cy='26' r='2.4'/%3E%3Ccircle cx='24' cy='13' r='2.1'/%3E%3Ccircle cx='12' cy='7' r='1.8'/%3E%3C/g%3E%3C/svg%3E") no-repeat center / contain; }
+.business-inner { position: relative; z-index: 1; }
+
+/* Спокойный режим: без больших перемещений */
+.m-calm .colors-figure:not(.in) .u-cw { transform: none; }
+.m-calm .feature .art:not(.play) .u-phone { transform: none; }
+
+/* Планшет и компьютер */
+@media (min-width: 700px) {
+  .step-list::before { left: 0; right: 0; top: 26px; bottom: auto; width: auto; height: 1px; background: linear-gradient(90deg, var(--brass), rgba(184,151,90,.08)); transform-origin: left; }
+  .m .step-list:not(.in)::before { transform: scaleX(0); }
+  .step-list li::before { padding: 0 18px 0 0; }
+  .business::after { width: 520px; height: 325px; right: 2%; bottom: -40px; }
+  .m .hero-media::before { width: 560px; }
+}
+
+/* Печать — всё видно */
+@media print {
+  .sky, .progress { display: none; }
+  .m [data-r], .m .split .w > span, .m .hero *, .m .ink .iw, .m .cn circle { opacity: 1 !important; transform: none !important; animation: none !important; }
+}

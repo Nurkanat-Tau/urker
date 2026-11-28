@@ -33,7 +33,7 @@
 
   --wrap: 1200px;
   --gutter: 22px;
-  --section: 80px;
+  --section: 64px;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -82,26 +82,26 @@ p { text-wrap: pretty; }
 .icon { width: 20px; height: 20px; flex: none; }
 
 /* ---------- Первый экран ---------- */
-.hero { padding: 16px 0 56px; }
-.hero-grid { display: grid; gap: 12px; }
+.hero { padding: 8px 0 48px; }
+.hero-grid { display: grid; gap: 4px; }
 .hero-text { order: 2; }
 .hero-media { order: 1; }
-.kind { font-size: 16px; color: var(--brass); margin-bottom: 10px; }
-h1 { margin-bottom: 18px; }
-h1 .product { display: block; font-size: 22px; color: var(--text-soft); margin-bottom: 8px; letter-spacing: .02em; }
-h1 .slogan { display: block; font-size: 42px; }
-.lead { color: var(--text-soft); font-size: 17px; max-width: 32em; margin-bottom: 24px; }
-.price-row { display: flex; align-items: baseline; gap: 10px; margin-bottom: 22px; }
+.kind { display: none; }
+h1 { margin-bottom: 12px; }
+h1 .product { display: block; font-size: 18px; color: var(--brass-light); margin-bottom: 6px; letter-spacing: .04em; }
+h1 .slogan { display: block; font-size: 36px; line-height: 1.12; text-wrap: balance; }
+.lead { color: var(--text-soft); font-size: 16px; max-width: 32em; margin-bottom: 16px; }
+.price-row { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; }
 .price-star { width: 28px; height: 18px; color: var(--brass); align-self: center; }
 .price-label { font-size: 14px; color: var(--text-soft); }
 .price { font-family: var(--serif); font-size: 32px; font-variant-numeric: lining-nums tabular-nums; }
 .hero-text .btn { width: 100%; }
-.facts { list-style: none; padding: 0; margin: 26px 0 0; display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--rule); font-size: 13px; line-height: 1.35; color: var(--text-soft); }
+.facts { list-style: none; padding: 0; margin: 22px 0 0; display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--rule); font-size: 13px; line-height: 1.35; color: var(--text-soft); }
 .facts li { padding: 10px 8px 0 0; }
 .facts li + li { padding-left: 10px; border-left: 1px solid var(--rule); }
 .art svg, .art img { width: 100%; height: auto; }
-.hero-media .art { max-width: 250px; margin: 0 auto; }
-.sketch-note { font-size: 12px; color: var(--text-soft); text-align: center; margin-top: -6px; }
+.hero-media .art { max-width: 160px; margin: 0 auto; }
+.sketch-note { font-size: 11px; color: var(--text-soft); opacity: .8; text-align: center; margin-top: -10px; letter-spacing: .02em; }
 
 /* ---------- Почему Үркер (светлый блок) ---------- */
 .story { background: var(--paper); color: var(--ink); padding: 64px 0; color-scheme: light; }
@@ -116,10 +116,10 @@ h1 .slogan { display: block; font-size: 42px; }
 .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--rule); }
 .divider svg { width: 44px; height: 28px; }
 
-.feature-list { display: grid; gap: 48px; }
-.feature .art { background: #0D0D0D; margin-bottom: 18px; aspect-ratio: 4 / 3; display: grid; place-items: center; overflow: hidden; }
+.feature-list { display: grid; gap: 36px; }
+.feature .art { background: #0D0D0D; margin-bottom: 14px; aspect-ratio: 3 / 2; display: grid; place-items: center; overflow: hidden; }
 .feature .art svg, .feature .art img { width: 100%; height: 100%; object-fit: contain; }
-.feature h3 { font-size: 24px; margin-bottom: 6px; }
+.feature h3 { font-size: 22px; margin-bottom: 4px; }
 .feature p { color: var(--text-soft); max-width: 28em; }
 
 .specs-grid { display: grid; gap: 40px; }
@@ -127,6 +127,12 @@ h1 .slogan { display: block; font-size: 42px; }
 .spec > div { display: grid; gap: 2px; padding: 14px 0; border-bottom: 1px solid var(--rule); }
 .spec dt { color: var(--text-soft); font-size: 15px; }
 .spec dd { font-family: var(--serif); font-size: 19px; }
+
+.colors-figure { margin: 0; }
+.color-list { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 16px; margin-top: 14px; font-size: 14px; color: var(--text-soft); }
+.color-list-label { color: var(--text); font-weight: 500; }
+.color-item { display: inline-flex; align-items: center; gap: 6px; }
+.color-item i { width: 12px; height: 12px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(255,255,255,.25); }
 
 /* ---------- Конструктор ---------- */
 .builder { background: var(--bg-2); padding: var(--section) 0; outline: none; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
@@ -175,6 +181,8 @@ input[aria-invalid="true"], select[aria-invalid="true"] { border-color: var(--er
 .qty-more { flex-basis: 100%; font-size: 14px; color: var(--brass-light); }
 
 .total { display: flex; justify-content: space-between; align-items: baseline; padding: 18px 0; border-top: 1px solid var(--text-soft); border-bottom: 1px solid var(--rule); }
+.total-note { font-size: 14px; color: var(--text-soft); margin-top: -14px; }
+.optional { font-weight: 400; font-size: 14px; color: var(--text-soft); }
 .total strong { font-family: var(--serif); font-weight: 400; font-size: 30px; font-variant-numeric: lining-nums tabular-nums; }
 .contacts-title { font-size: 22px; margin-top: 8px; }
 
@@ -223,10 +231,16 @@ input[aria-invalid="true"], select[aria-invalid="true"] { border-color: var(--er
 .footer-link { display: inline-flex; align-items: center; min-height: 44px; color: var(--text); }
 .footer-seller, .footer-copy { font-size: 14px; }
 
-/* ---------- Плавающая кнопка WhatsApp (телефон) ---------- */
-.wa-float { position: fixed; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); z-index: 30; width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; background: var(--text); color: var(--bg); box-shadow: 0 4px 16px rgba(0,0,0,.5); transition: opacity .2s, transform .2s; }
-.wa-float svg { width: 28px; height: 28px; }
-.wa-float.is-hidden { opacity: 0; transform: translateY(12px); pointer-events: none; }
+/* ---------- Нижняя панель заказа (телефон) ---------- */
+.buybar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: flex; gap: 10px; padding: 10px var(--gutter) calc(10px + env(safe-area-inset-bottom)); background: rgba(18,18,18,.96); border-top: 1px solid var(--rule); transition: transform .25s ease, opacity .25s ease; }
+.buybar.is-hidden { transform: translateY(110%); opacity: 0; pointer-events: none; }
+.buybar-order { flex: 1; min-height: 50px; padding: 0 16px; justify-content: space-between; }
+.buybar-price { font-family: var(--serif); font-size: 18px; font-variant-numeric: lining-nums tabular-nums; }
+.buybar-wa { flex: none; width: 50px; height: 50px; display: grid; place-items: center; border: 1px solid var(--text-soft); color: var(--text); }
+.buybar-wa svg { width: 26px; height: 26px; }
+.buybar-wa:hover { border-color: var(--text); }
+.noscript { padding: 16px var(--gutter); background: var(--paper); color: var(--ink); font-size: 15px; }
+.noscript a { color: inherit; }
 
 /* ---------- Первый экран: звёзды загораются, имя гравируется ---------- */
 .u-anim .u-dots circle { fill-opacity: .2; transition: fill .5s ease, fill-opacity .5s ease; }
@@ -249,7 +263,12 @@ mark.draft { background: #FFE34D; color: #121212; padding: 0 2px; }
 @media (min-width: 700px) {
   :root {
   color-scheme: dark; --gutter: 40px; --section: 110px; }
-  .hero-media .art { max-width: 340px; }
+  .hero-media .art { max-width: 300px; }
+  .hero { padding: 24px 0 64px; }
+  h1 .product { font-size: 24px; }
+  .lead { font-size: 17px; margin-bottom: 24px; }
+  .price-row { margin-bottom: 22px; }
+  .feature .art { aspect-ratio: 4 / 3; }
   h2 { font-size: 44px; margin-bottom: 36px; }
   h1 .slogan { font-size: 60px; }
   h1 .product { font-size: 26px; }
@@ -278,6 +297,10 @@ mark.draft { background: #FFE34D; color: #121212; padding: 0 2px; }
   .builder-grid { grid-template-columns: 1fr 1fr; gap: 72px; align-items: start; }
   .preview-col { position: sticky; top: 90px; background: none; padding: 0; margin: 0; border: 0; }
   .preview { max-width: 440px; }
-  .wa-float { display: none; }
+  .buybar { display: none; }
   .site-footer { padding-bottom: 56px; }
 }
+
+/* Пока характеристик нет — блок показывает только цвета, по центру */
+.specs-grid > div:has(> .spec[data-gap]) { display: none; }
+.specs-grid:has(> div > .spec[data-gap]) { grid-template-columns: 1fr; max-width: 760px; }

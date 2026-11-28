@@ -40,6 +40,19 @@
 
   document.documentElement.classList.add('js');
 
+  // Выбор в конструкторе помним на время визита (случайная перезагрузка не сбрасывает)
+  var ORDER_KEY = 'urker-order';
+  try {
+    var savedOrder = JSON.parse(sessionStorage.getItem(ORDER_KEY) || 'null');
+    if (savedOrder) {
+      if (C.colors.some(function (c) { return c.id === savedOrder.color; })) state.color = savedOrder.color;
+      if (C.engravingFonts.some(function (f) { return f.id === savedOrder.font; })) state.font = savedOrder.font;
+      if (typeof savedOrder.engraving === 'string' && ENGRAVING_OK.test(savedOrder.engraving)) state.engraving = Array.from(savedOrder.engraving).slice(0, MAX_LEN).join('');
+      var q = parseInt(savedOrder.qty, 10); if (q >= 1 && q <= MAX_QTY) state.qty = q;
+    }
+  } catch (e) { /* нет доступа к sessionStorage — не страшно */ }
+  function saveOrderState() { try { sessionStorage.setItem(ORDER_KEY, JSON.stringify(state)); } catch (e) { /* ничего */ } }
+
   /* ---------- Вспомогательное ---------- */
 
   function $(id) { return document.getElementById(id); }
@@ -156,6 +169,15 @@
     });
 
     document.querySelectorAll('.js-price').forEach(function (n) { n.textContent = money(CFG.price); });
+    var colorList = $('color-list');
+    if (colorList && t.specs && t.specs.colorsLabel) {
+      colorList.textContent = '';
+      colorList.appendChild(el('span', 'color-list-label', t.specs.colorsLabel.replace('{n}', C.colors.length)));
+      C.colors.forEach(function (c) {
+        var item = el('span', 'color-item'); var dot = el('i'); dot.style.background = c.hex;
+        item.appendChild(dot); item.appendChild(document.createTextNode(c[lang])); colorList.appendChild(item);
+      });
+    }
     document.querySelectorAll('.js-wa').forEach(function (a) { a.href = waLink(t.whatsappText); });
     document.querySelectorAll('.js-wa-business').forEach(function (a) { a.href = waLink(t.business.whatsappText); });
     var ig = 'https://instagram.com/' + (CFG.instagram || '');
@@ -285,7 +307,11 @@
     $('qty-plus').disabled = state.qty >= MAX_QTY;
     $('qty-more').hidden = state.qty < MAX_QTY;
     $('total').textContent = money(CFG.price * state.qty);
+    var note = $('total-note'); if (note) note.textContent = fill(t.builder.readyNote || '');
+    if (submitBtn) submitBtn.textContent = submitLabel();
+    saveOrderState();
   }
+  function submitLabel() { return sending ? t.builder.sending : t.builder.submit + ' — ' + money(CFG.price * state.qty); }
 
   // Маска номера +7 7XX XXX XX XX
   function phoneDigits(value) {
@@ -325,7 +351,7 @@
       else { box.hidden = true; box.textContent = ''; p[1].removeAttribute('aria-invalid'); }
     });
     if (!summary.hidden) summary.textContent = t.builder.errors.summary;
-    submitBtn.textContent = sending ? t.builder.sending : t.builder.submit;
+    submitBtn.textContent = submitLabel();
     if (lastOrder) {
       var msg = orderMessage(lastOrder);
       document.querySelectorAll('.js-order-wa').forEach(function (a) { a.href = waLink(msg); });
@@ -363,6 +389,7 @@
     engravingInput = $('f-engraving'); nameInput = $('f-name'); phoneInput = $('f-phone'); citySelect = $('f-city');
     consentInput = $('f-consent'); honeypot = $('f-website'); submitBtn = $('f-submit');
     summary = $('form-summary'); okBox = $('result-ok'); failBox = $('result-fail');
+    engravingInput.value = state.engraving;
 
     engravingInput.addEventListener('input', function () {
       var chars = Array.from(engravingInput.value);
@@ -451,13 +478,19 @@
 
   var revealObserver = null;
   if ('IntersectionObserver' in window) {
-    var floatBtn = document.querySelector('.wa-float');
-    var hideFor = {};
-    var fo = new IntersectionObserver(function (entries) {
-      entries.forEach(function (en) { hideFor[en.target.id || 'footer'] = en.isIntersecting; });
-      if (floatBtn) floatBtn.classList.toggle('is-hidden', Object.keys(hideFor).some(function (k) { return hideFor[k]; }));
-    }, { threshold: 0.05 });
-    ['order', 'business'].map($).concat([document.querySelector('.site-footer')]).filter(Boolean).forEach(function (n) { fo.observe(n); });
+    // Нижняя панель заказа: прячется на первом экране (там своя кнопка), в конструкторе и подвале
+    var buybar = $('buybar');
+    if (buybar) {
+      buybar.hidden = false;
+      var hideFor = { top: true };
+      var fo = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) { hideFor[en.target.id || 'footer'] = en.isIntersecting; });
+        var hide = Object.keys(hideFor).some(function (k) { return hideFor[k]; });
+        buybar.classList.toggle('is-hidden', hide);
+        if (hide) buybar.setAttribute('inert', ''); else buybar.removeAttribute('inert');
+      }, { threshold: 0 });
+      ['top', 'order', 'business'].map($).concat([document.querySelector('.site-footer')]).filter(Boolean).forEach(function (n) { fo.observe(n); });
+    }
 
     // Образцы шрифтов гравировки подгружаем, только когда конструктор рядом
     var orderSection = $('order');
